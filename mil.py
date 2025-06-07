@@ -13,9 +13,6 @@ import seaborn as sns
 
 def draw_manifold(n_sample, t_sample):
     embed = manifold.Isomap(n_components=2)
-    # embed = manifold.MDS(n_components=2, random_state=233)
-    # embed = manifold.TSNE(n_components=2, random_state=233)
-
     trans = embed.fit_transform(np.vstack((n_sample, t_sample)))
     n_trans = trans[:n_sample.shape[0], :]
     t_trans = trans[n_sample.shape[0]:, :]
@@ -27,8 +24,6 @@ def draw_manifold(n_sample, t_sample):
     t_trans = t_trans[np.lexsort((t_trans[:, 1],))]
     plt.scatter(t_trans[:, 1], t_trans[:, 2], c='red')
     plt.scatter(n_trans[:, 1], n_trans[:, 2], c='blue')
-    # plt.xlim([-20, 35])
-    # plt.ylim([-25, 20])
     plt.show()
 
 
@@ -303,22 +298,16 @@ N_sample = X[idx[0]:idx[1], :]  # 1833417
 T_sample = X[idx[46]:idx[47], :]  # 1955514
 M_case_idx = list(range(7, 24)) + list(range(52, 62))  # (27) neck margin cases
 NT_case_idx = list(range(0, 7)) + list(range(24, 52))  # (35) normal and tumor cases
-# S_case_idx = list(range(24, 30)) + list(range(68, 76))  # (14) SMA margin cases
-
-# to_remove = [28, 37, 39, 40, 41, 42, 43]
-# for val in to_remove:
-#     NT_case_idx.remove(val)
 
 M_case_label = case_label[M_case_idx]
 NT_case_label = case_label[NT_case_idx]
-# S_case_label = case_label[S_case_idx]
 
 # embedding = manifold.Isomap(n_components=2).fit(np.vstack((N_sample, T_sample)))
 # X_trans = embedding.transform(X)  # Isomap embedding of all instances, modeled by two samples
 X_trans = manifold.Isomap(n_components=2).fit_transform(X)
 # draw_scatter_with_label(X_trans, Y_bag)
 
-# # leave one out validation for neck/SMA margin
+# # leave one out validation for margin
 test_case_idx = M_case_idx
 test_case_label = M_case_label
 
@@ -331,12 +320,6 @@ for fold in range(len(test_case_idx)):
 
     case_idx_train = np.array([test_case_idx[j] for j in range(len(test_case_idx)) if j != fold])
     case_idx_train = np.append(case_idx_train, NT_case_idx)  # add all NT indices to training indices when test M
-
-    # case_idx_train = np.array(NT_case_idx)
-    # """replace with above two rows"""
-
-    # if test_type == 'S':
-    #     case_idx_train = np.append(case_idx_train, M_case_idx)  # add all M indices to training indices when test S
     case_label_train = case_label[case_idx_train]
 
     X_train = np.vstack(list((X[idx[i]:idx[i + 1]] for i in case_idx_train)))  # extract training/test set by indices
@@ -362,10 +345,6 @@ for fold in range(len(test_case_idx)):
         case_num_test[idx_test[i]:idx_test[i + 1]] = case_idx_test[i]
 
     classifier = LogisticRegression(max_iter=1000, C=1.0, solver='lbfgs')
-    # classifier = SVC(C=1.0, kernel='linear', probability=True, random_state=233)
-    # StandardScaler: 'liblinear'
-    # classifier = mi_train(classifier, X_train, idx_train,
-    #                       case_label_train, inst_label_train)
     classifier = mil_v2_train(classifier, X_train, idx_train,
                               case_label_train, inst_label_train, k=1)
 
@@ -400,5 +379,5 @@ print('Test AUC:' + str(auc))
 # print('Optimal threshold:' + str(thresholds[np.argmax(tpr-fpr)]))
 
 # featureData['trained_label'] = classifier.predict(X)
-# featureData.to_csv("./feature/featureData_2.15_1.csv")
+# featureData.to_csv("./feature/featureData.csv")
 pass
